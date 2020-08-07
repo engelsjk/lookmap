@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// NOTE: lookmap client.go/hub.go files are currently lightly modified versions of the gorilla/websockets/chat example.
+// https://github.com/gorilla/websocket/tree/master/examples/chat
+
 package lookmap
 
 // Hub maintains the set of active clients and broadcasts messages to the

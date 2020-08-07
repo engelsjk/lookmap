@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// NOTE: lookmap main.go file is currently lightly modified version of the gorilla/websockets/chat example.
+// https://github.com/gorilla/websocket/tree/master/examples/chat
+
 package main
 
 import (
