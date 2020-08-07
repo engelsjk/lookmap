@@ -12,7 +12,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/engelsjk/maptime/lookmap"
+	"github.com/engelsjk/lookmap/lookmap"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
