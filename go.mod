@@ -1,5 +1,3 @@
-module github.com/engelsjk/maptime
+module github.com/engelsjk/lookmap
 
 go 1.14
-
-require github.com/gorilla/websocket v1.4.2
