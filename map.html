@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>LookMap</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+        crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+        integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+        crossorigin=""></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <style>
+
+    </style>
+
+    <script src="https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-hash/0.2.1/leaflet-hash.js"></script>
+
+    <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+    <script src="https://unpkg.com/geobuf@3.0.2/dist/geobuf.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
+        type="text/css" />
+    <div id="map"></div>
+
+    <script>
+
+        var map = L.map('map', {
+            doubleClickZoom: false
+        }).setView([51.505, -0.09], 13);
+
+        var hash = new L.Hash(map);
+
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var drawnItems = L.geoJSON().addTo(map);
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+
+        map.addControl(drawControl);
+
+        map.on(L.Draw.Event.CREATED, function (e) {
+            var layer = e.layer;
+            var type = e.layerType;
+
+            var f = e.layer.toGeoJSON();
+
+            f.properties.type = type;
+            if (type == "circle") {
+                f.properties.radius = layer.getRadius();
+            }
+
+            sendFeature(f);
+        });
+
+        map.on(L.Draw.Event.DELETED, function (e) {
+            console.log(e);
+        });
+
+        map.on('dblclick', function (e) {
+            sendFocus(latlng2f(e.latlng));
+        });
+
+        //////////////////////////////////////////////////
+        //////////////////////////////////////////////////
+
+        function sendFocus(f) {
+            props = {
+                "draw": false,
+                "focus": true,
+                "animate": true,
+                "animate_duration": 2,
+                "zoom": map.getZoom()
+            }
+            f.properties = { ...f.properties, ...props };
+            var buffer = geobuf.encode(f, new Pbf());
+            conn.send(buffer);
+        }
+
+        function sendBounds(f) {
+            props = {
+                "draw": false,
+                "focus": false,
+                "bounds": true,
+                "animate": false,
+                "animate_duration": 0,
+                "zoom": map.getZoom()
+            }
+            f.properties = { ...f.properties, ...props };
+            var buffer = geobuf.encode(f, new Pbf());
+            conn.send(buffer);
+        }
+
+        function sendFeature(f) {
+            props = {
+                "draw": true,
+                "uuid": create_UUID()
+            }
+            f.properties = { ...f.properties, ...props };
+            var buffer = geobuf.encode(f, new Pbf());
+            conn.send(buffer);
+        }
+
+        function connect() {
+            conn = new WebSocket("ws://" + document.location.host + "/ws");
+            conn.binaryType = "arraybuffer";
+
+            conn.onclose = function (evt) {
+                setTimeout(function () {
+                    connect();
+                }, 1000);
+            };
+
+            conn.onmessage = function (msg) {
+                if (msg.data instanceof ArrayBuffer) {
+                    var f = geobuf.decode(new Pbf(new Uint8Array(msg.data)));
+                    if (f.properties.draw) {
+                        draw(f);
+                    }
+                    if (f.properties.focus) {
+                        focus(f);
+                    }
+                    // if (f.properties.bounds) {
+                    //     bounds(f);
+                    // }
+                }
+            };
+
+            window.onbeforeunload = function () {
+                conn.close();
+            };
+        }
+
+        window.onload = function () {
+            connect();
+        };
+
+        //////////////////////////////////////////////////
+        //////////////////////////////////////////////////
+
+        function draw(f) {
+            if (f.properties.type === "circle") {
+                L.circle(f2latlng(f), f.properties.radius, {}).addTo(drawnItems);
+            } else {
+                drawnItems.addData(f);
+            }
+        }
+
+        function focus(f) {
+            map.flyTo(f2latlng(f), f.properties.zoom, {
+                animate: f.properties.animate,
+                duration: f.properties.animate_duration // in seconds
+            });
+        }
+
+        function bounds(f) {
+            map.flyToBounds(f2bounds(f), {
+                animate: f.properties.animate,
+                duration: f.properties.animate_duration // in seconds
+            });
+        }
+
+        //////////////////////////////////////////////////
+        //////////////////////////////////////////////////
+
+        function f2latlng(f) {
+            if (f.type != "Feature") {
+                return null
+            }
+            if (f.geometry.type != "Point") {
+                return null
+            }
+            var c = f.geometry.coordinates;
+            return L.latLng(c[1], c[0]);
+        }
+
+        function latlng2f(latlng) {
+            return {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [latlng.lng, latlng.lat]
+                }
+            };
+        }
+
+        function f2bounds(f) {
+            if (f.type != "Feature") {
+                return null
+            }
+            if (f.geometry.type != "Polygon") {
+                return null
+            }
+            var c = f.geometry.coordinates;
+            return L.latLngBounds(L.latLng(c[0][0]), L.latLng(c[0][2]));
+        }
+
+        function bounds2f(bounds) {
+            var nw = bounds.getNorthWest();
+            var se = bounds.getSouthEast();
+            return {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [nw.lng, nw.lat],
+                            [se.lng, nw.lat],
+                            [se.lng, se.lat],
+                            [nw.lng, se.lat]
+                        ]
+                    ]
+                }
+            };
+        }
+
+        // https://www.w3resource.com/javascript-exercises/javascript-math-exercise-23.php
+        function create_UUID() {
+            var dt = new Date().getTime();
+            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = (dt + Math.random() * 16) % 16 | 0;
+                dt = Math.floor(dt / 16);
+                return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            return uuid;
+        }
+
+    </script>
+
+</body>
+
+</html>
