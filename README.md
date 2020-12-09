@@ -1,6 +1,6 @@
 # lookmap
 
-A multiclient interactive Leaflet map using WebSockets. An experimental idea. 
+An experimental, real-time collaborative Leaflet map using WebSockets.
 
 ![](images/lookmap.gif)
 
