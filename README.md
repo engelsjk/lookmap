@@ -1,6 +1,6 @@
 # lookmap
 
-An experimental, real-time collaborative Leaflet map using WebSockets.
+An experimental, real-time collaborative Leaflet map using Geobuf-encoded WebSocket messages.
 
 ![](images/lookmap.gif)
 
