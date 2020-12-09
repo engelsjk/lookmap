@@ -74,16 +74,16 @@ conn.onmessage = function (msg) {
 function focus(f) {
   map.flyTo(f2latlng(f), f.properties.zoom, {
       animate: f.properties.animate,
-      duration: f.properties.animate_duration // in seconds
+      duration: f.properties.animate_duration
   });
 }
 ```
 
-Clients receive every message triggered by an event, including events from that client. Therefore, a client only responds to events by receiving messages, not by the event triggers themselves. In other words, if you draw a shape on the map, that shape only appears on the map once the client receives back the message caused by that drawing event. 
+Clients receive every message triggered by an event, including events from itself. A client only responds to events by receiving messages, not by the event triggers themselves. In other words, if you draw a shape on the map, that shape only appears on the map once the client receives back the message triggered by that drawing event. 
         
-## Somewhat Similar Ideas
+## Other
 
-I looked around for similar ideas and this is what I found:
+While brainstorming this idea, I looked around for other implementations and this is what I found:
 
 * [Ethermap - A realtime collaborative, version controlled map editor](https://github.com/dwilhelm89/Ethermap)
 * [Real-Time Interaction Between Maps with Socket.io and JavaScript](https://www.youtube.com/watch?v=Xgoexs3xybU)
