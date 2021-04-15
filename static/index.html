@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>LookMap</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+    <script src="https://unpkg.com/geobuf@3.0.2/dist/geobuf.js"></script>
+    <script src="js/actions.js" type="text/javascript"></script>
+    <script src="js/sockets.js" type="text/javascript"></script>
+    <script src="js/utils.js" type="text/javascript"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZW5nZWxzamsiLCJhIjoiY2p6dnVpNTl2MGplMTNicGZ2YW50ZDU1bSJ9.Qxqpf4oJC1-cUyssMCy6dQ';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/engelsjk/cknj42ww410ql18l1fn8ew9ij',
+            center: [25, 45],
+            zoom: 2,
+            hash: true
+        });
+
+        map.on('load', function () {
+
+            map.addSource('mapbox-country-boundaries', {
+                type: 'vector',
+                url: 'mapbox://mapbox.country-boundaries-v1'
+            });
+
+            map.addLayer(
+                {
+                    'id': 'country-boundaries-highlight',
+                    'type': 'fill',
+                    'source': 'mapbox-country-boundaries',
+                    'source-layer': 'country_boundaries',
+                    'paint': {
+                        'fill-outline-color': '#000',
+                        'fill-color': '#fff',
+                        'fill-opacity': 1
+                    },
+                    'filter': ['in', 'iso_3166_1', '']
+                },
+            );
+
+            // highlight
+            map.on('click', function (e) {
+                e.preventDefault();
+                var msg = point2feature(e.point);
+                var filter = getFilter(e.point);
+                msg.properties.filter = filter;
+                sendHighlight(msg)
+            });
+
+            // focus (+highlight?)
+            map.on('dblclick', function (e) {
+                e.preventDefault();
+                var msg = lnglat2feature(e.lngLat);
+                sendFocus(msg);
+            });
+        });
+
+        function getFilter(point) {
+            var features = map.queryRenderedFeatures(point, {
+                layers: ['country-boundaries-fill']
+            });
+            var filter = features.reduce(
+                function (memo, feature) {
+                    memo.push(feature.properties.iso_3166_1);
+                    return memo;
+                },
+                ['in', 'iso_3166_1']
+            );
+            return filter
+        }
+
+    </script>
+
+</body>
+
+</html>
