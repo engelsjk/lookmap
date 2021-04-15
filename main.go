@@ -9,9 +9,13 @@ import (
 	"github.com/engelsjk/lookmap/socket"
 )
 
-var port = flag.String("port", "8080", "http service port")
-
 func main() {
+
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
 
 	flag.Parse()
 
@@ -25,9 +29,9 @@ func main() {
 		socket.ServeWs(hub, w, r)
 	})
 
-	log.Printf("running at :%s...", *port)
+	log.Printf("running at :%s...", port)
 
-	err := http.ListenAndServe(net.JoinHostPort("", *port), nil)
+	err := http.ListenAndServe(net.JoinHostPort("", port), nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
