@@ -54,8 +54,8 @@
                     'source': 'mapbox-country-boundaries',
                     'source-layer': 'country_boundaries',
                     'paint': {
-                        'fill-outline-color': '#000',
-                        'fill-color': '#fff',
+                        'fill-outline-color': '#de9e36',
+                        'fill-color': '#deb841',
                         'fill-opacity': 1
                     },
                     'filter': ['in', 'iso_3166_1', '']
@@ -72,11 +72,11 @@
             });
 
             // focus (+highlight?)
-            map.on('dblclick', function (e) {
-                e.preventDefault();
-                var msg = lnglat2feature(e.lngLat);
-                sendFocus(msg);
-            });
+            // map.on('dblclick', function (e) {
+            //     e.preventDefault();
+            //     var msg = lnglat2feature(e.lngLat);
+            //     sendFocus(msg);
+            // });
         });
 
         function getFilter(point) {
