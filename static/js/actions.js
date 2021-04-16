@@ -24,7 +24,8 @@ function focus(f) {
 // });
 
 function highlight(f) {
-    map.setFilter('country-boundaries-highlight', f.properties.filter);
+    map.setFilter('country-boundaries-highlight-fill', f.properties.filter);
+    map.setFilter('country-boundaries-highlight-line', f.properties.filter);
 }
 
 function draw(f) { }

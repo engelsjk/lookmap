@@ -49,14 +49,27 @@
 
             map.addLayer(
                 {
-                    'id': 'country-boundaries-highlight',
+                    'id': 'country-boundaries-highlight-fill',
                     'type': 'fill',
                     'source': 'mapbox-country-boundaries',
                     'source-layer': 'country_boundaries',
                     'paint': {
-                        'fill-outline-color': '#de9e36',
                         'fill-color': '#deb841',
                         'fill-opacity': 1
+                    },
+                    'filter': ['in', 'iso_3166_1', '']
+                },
+            );
+            map.addLayer(
+                {
+                    'id': 'country-boundaries-highlight-line',
+                    'type': 'line',
+                    'source': 'mapbox-country-boundaries',
+                    'source-layer': 'country_boundaries',
+                    'paint': {
+                        'line-color': '#de9e36',
+                        'line-width': 3,
+                        'line-opacity': 1
                     },
                     'filter': ['in', 'iso_3166_1', '']
                 },
