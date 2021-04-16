@@ -45,7 +45,7 @@ function sendFeature(f) {
 }
 
 function connect() {
-    conn = new WebSocket("ws://" + document.location.host + "/ws");
+    conn = new WebSocket("wss://" + document.location.host + "/ws");
     conn.binaryType = "arraybuffer";
 
     conn.onclose = function (evt) {
